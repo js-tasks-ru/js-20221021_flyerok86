@@ -6,5 +6,6 @@
  * @returns {number}
  */
 export const sum = (m, n) => {
-
+    if (typeof m !== "number" &&  n !== "number") return false;
+    return m + n;
 };

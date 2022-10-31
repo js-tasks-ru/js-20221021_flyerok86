@@ -5,5 +5,5 @@
  */
 export function uniq(arr) {
   if (!arr) return [];
-  return [...new Set([...arr])];
+  return [...new Set(arr)];
 }

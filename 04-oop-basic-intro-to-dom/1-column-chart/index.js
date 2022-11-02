@@ -40,33 +40,30 @@ export default class ColumnChart {
 
   getTemplate() {
     return `<div class="dashboard__chart_orders ${
-      this.data.length === 0 ? " column-chart_loading" : ""
-    }">
-                <div class="column-chart" style="--chart-height: ${
-                  this.chartHeight
-                }">
-                <div class="column-chart__title">
-                  ${this.label}
-                  ${
-                    this.link
-                      ? '<a href="/" class="column-chart__link">View all</a>'
-                      : ""
-                  }
+      this.data.length === 0 ? " column-chart_loading" : ""}
+      ">
+        <div class="column-chart" style="--chart-height: ${this.chartHeight}">
+            <div class="column-chart__title">
+              ${this.label}
+                ${
+                  this.link
+                    ? '<a href="/" class="column-chart__link">View all</a>'
+                    : ""
+                }
+             </div>
+             <div class="column-chart__container">
+                <div data-element="header" class="column-chart__header">
+                  ${this.heading}
                 </div>
-                <div class="column-chart__container">
-                    <div data-element="header" class="column-chart__header">${
-                      this.heading
-                    }</div>
-                    <div data-element="body" class="column-chart__chart">
-                        ${this.data
-                          .map((item) => {
-                            return `<div style="--value: ${item.value}" data-tooltip="${item.percent}"></div>`;
-                          })
-                          .join("")}
-                    </div>
+                  <div data-element="body" class="column-chart__chart">
+                    ${this.data
+                      .map((item) => {
+                        return `<div style="--value: ${item.value}" data-tooltip="${item.percent}"></div>`;
+                       }).join("")}
                 </div>
-                </div>
-            </div> `;
+          </div>
+        </div>
+      </div> `;
   }
 
   render() {

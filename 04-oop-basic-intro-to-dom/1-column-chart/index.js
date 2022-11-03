@@ -1,18 +1,18 @@
 export default class ColumnChart {
+  chartHeight = 50;
+
   constructor({
     data = [],
     label = "",
     value,
     link,
-    formatHeading = (data) => data,
-    chartHeight = 50,
+    formatHeading = (data) => data
   } = {}) {
     this.data = this.getColumnProps(data);
     this.label = label;
     this.value = value;
     this.link = link;
     this.heading = formatHeading.call(this, value);
-    this.chartHeight = chartHeight;
 
     this.render();
     this.initEventListeners();

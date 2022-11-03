@@ -33,7 +33,7 @@ export default class ColumnChart {
   update(data) {
     this.data = this.getColumnProps(data);
     
-    this.remove()
+    this.destroy();
     this.render();
     this.initEventListeners();
   }

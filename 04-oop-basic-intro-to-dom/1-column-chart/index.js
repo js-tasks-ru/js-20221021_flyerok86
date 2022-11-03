@@ -14,8 +14,6 @@ export default class ColumnChart {
     this.heading = formatHeading.call(this, value);
     this.chartHeight = chartHeight;
 
-    this.update = this.update;
-
     this.render();
     this.initEventListeners();
   }

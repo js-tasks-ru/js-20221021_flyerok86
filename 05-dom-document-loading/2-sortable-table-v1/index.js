@@ -40,7 +40,6 @@ export default class SortableTable {
   }
 
   getTemplateHeader() {
-    console.log(this.sortableParam.id);
     return this.headerConfig
       .map(({ id, sortable, title, template }) => {
         return `
@@ -91,7 +90,6 @@ export default class SortableTable {
     this.sortableParam.id = fieldValue;
     this.sortableParam.direction = orderValue;
     //this.reRender();
-    console.log(this.subElements);
     this.subElements.body.innerHTML = this.getTemplateBody();
     this.subElements.header.innerHTML = this.getTemplateHeader();
   }

@@ -82,8 +82,8 @@ export default class SortableTable {
     if (fieldValue === "title") {
       fn = (a, b) =>
         orderValue === "asc"
-          ? a[fieldValue].localeCompare(b[fieldValue])
-          : b[fieldValue].localeCompare(a[fieldValue]);
+          ? this.compare(a[fieldValue], b[fieldValue])
+          : this.compare(b[fieldValue], a[fieldValue]);
     }
 
     this.data.sort(fn);
@@ -95,6 +95,10 @@ export default class SortableTable {
     this.subElements.body.innerHTML = this.getTemplateBody();
     this.subElements.header.innerHTML = this.getTemplateHeader();
   }
+
+  compare = (a, b) => {
+    return a.localeCompare(b, ["ru", "en"], { caseFirst: "upper" });
+  };
 
   destroy() {
     this.element = null;

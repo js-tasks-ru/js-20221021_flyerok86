@@ -9,8 +9,8 @@ export default class NotificationMessage {
   getTemplate() {
     return `
             <div class="notification ${this.type}" style="--value:${
-      this.duration / 1000
-    }s">
+                  this.duration / 1000
+            }s">
                 <div class="timer"></div>
                 <div class="inner-wrapper">
                     <div class="notification-header">success</div>

@@ -79,5 +79,11 @@
 
     sortableTable.sort(fieldValue, orderValue);
   });
+
+  const columns = sortableTable.element.querySelectorAll('.sortable-table__cell[data-id]');
+    const isSortingExists = [...columns].some(column => {
+      console.log(column.dataset.order)
+    });
+    // console.log(isSortingExists)
 </script>
 </body>

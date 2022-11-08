@@ -1,4 +1,6 @@
 export default class NotificationMessage {
+  static elementNode;
+
   constructor(text = "", { duration = 2000, type = "success" } = {}) {
     this.text = text;
     this.duration = duration;
@@ -9,7 +11,7 @@ export default class NotificationMessage {
   getTemplate() {
     return `
             <div class="notification ${this.type}" style="--value:${
-                  this.duration / 1000
+              this.duration / 1000
             }s">
                 <div class="timer"></div>
                 <div class="inner-wrapper">
@@ -23,31 +25,30 @@ export default class NotificationMessage {
   }
 
   getElement() {
-    this.removePreviousNodes();
     const element = document.createElement("div");
+
     element.innerHTML = this.getTemplate();
     this.element = element.firstElementChild;
   }
 
-  show(targetElement) {
-    document.body.append(
-      targetElement ? targetElement.append(this.element) : this.element
-    );
-    setTimeout(() => this.destroy(), this.duration);
+  show(targetElement = document.body) {
+    if (NotificationMessage.elementNode) {
+      NotificationMessage.elementNode.remove();
+    }
+
+    NotificationMessage.elementNode = this.element;
+
+    targetElement.append(NotificationMessage.elementNode);
+
+    this.timer = setTimeout(() => this.destroy(), this.duration);
   }
 
   destroy() {
+    clearTimeout(this.timer);
     this.remove();
   }
 
   remove() {
     this.element.remove();
-  }
-
-  removePreviousNodes() {
-    const elements = document.querySelectorAll(".notification");
-    elements.forEach((el) => {
-      el.remove();
-    });
   }
 }

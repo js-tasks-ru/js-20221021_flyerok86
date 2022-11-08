@@ -16,11 +16,6 @@ export default class SortableTable {
     };
   }
 
-  // reRender() {
-  //   const rootNode = "#root";
-  //   document.querySelector(rootNode).innerHTML = this.getTemplate();
-  // }
-
   getTemplate() {
     const header = this.getTemplateParentBlock(
       "header",
@@ -74,11 +69,14 @@ export default class SortableTable {
   }
 
   sort(fieldValue, orderValue) {
+    const sortType = this.headerConfig.find((item) => fieldValue === item.id)?.sortType;
+
     let fn = (a, b) =>
       orderValue === "asc"
         ? a[fieldValue] - b[fieldValue]
         : b[fieldValue] - a[fieldValue];
-    if (fieldValue === "title") {
+
+    if (sortType === "string") {
       fn = (a, b) =>
         orderValue === "asc"
           ? this.compare(a[fieldValue], b[fieldValue])
@@ -89,7 +87,7 @@ export default class SortableTable {
 
     this.sortableParam.id = fieldValue;
     this.sortableParam.direction = orderValue;
-    //this.reRender();
+
     this.subElements.body.innerHTML = this.getTemplateBody();
     this.subElements.header.innerHTML = this.getTemplateHeader();
   }

@@ -66,7 +66,6 @@ class Tooltip {
     document.removeEventListener("pointermove", this.mouseMoveHandler);
     document.removeEventListener("pointerout", this.mouseOutHandler);
     this.remove();
-    //this.element = null;
   }
 }
 

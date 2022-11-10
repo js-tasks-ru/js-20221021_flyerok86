@@ -44,7 +44,6 @@ class Tooltip {
   }
 
   setPos(event) {
-    console.log(this.element);
     this.element.style.left = `${event.clientX + this.tooltipOffset}px`;
     this.element.style.top = `${event.clientY + this.tooltipOffset}px`;
   }

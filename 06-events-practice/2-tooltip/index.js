@@ -55,7 +55,6 @@ class Tooltip {
     const element = document.createElement("div");
     element.innerHTML = html || `<div class="tooltip">This is tooltip</div>`;
     this.element = element.firstElementChild;
-    document.body.append(this.element);
   }
 
   remove() {

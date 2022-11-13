@@ -4,16 +4,14 @@ export default class DoubleSlider {
     max = 100,
     formatValue = (data) => data,
     selected = {
-      from: 0,
-      to: 100,
+      from: min,
+      to: max,
     },
   } = {}) {
     this.min = min;
     this.max = max;
     this.selected = selected;
     this.formatValue = formatValue;
-
-    this.movableElement;
 
     this.render();
     this.initListeners();
@@ -24,30 +22,30 @@ export default class DoubleSlider {
   }
 
   onPointerDown = (event) => {
-    console.log(event.target.dataset.element);
     this.dataset = event.target.dataset.element;
 
     if (!this.dataset) return;
 
-    //this.pressedButton = event.target.dataset.element === "from" ? "left" : "right";
-
     this.boundary = this.element.querySelector(".range-slider__progress");
+
+    this.leftBoundary = this.element.querySelector('span[data-element="from"]');
+    this.rightBoundary = this.element.querySelector('span[data-element="to"]');
+    this.innerBoundary = this.element.querySelector('[data-element="inner"]');
+
+    this.thumbCurrent = this.element.querySelector(
+      `span[data-element="${event.target.dataset.element}"]`
+    );
+
     this.thumbLeft = this.element.querySelector(
-      `span[data-element="from"]`
+      `span[data-element="thumbLeft"]`
     );
     this.thumbRight = this.element.querySelector(
-        `span[data-element="to"]`
-      );
+      `span[data-element="thumbRight"]`
+    );
 
+    this.thumbLeftRect = this.thumbLeft.getBoundingClientRect();
     this.thumbRightRect = this.thumbRight.getBoundingClientRect();
-    
-    console.log(this.thumbRect)
-
-    this.sliderInerRect = this.element
-      .querySelector(".range-slider__inner")
-      ?.getBoundingClientRect();
-
-    //console.log(this.thumb.offsetWidth / 2);
+    this.sliderInerRect = this.innerBoundary.getBoundingClientRect();
 
     this.prevClientX = event.clientX;
 
@@ -56,15 +54,27 @@ export default class DoubleSlider {
   };
 
   onPointerMove = (event) => {
-    if (event.clientX > this.sliderInerRect.right + this.thumbRight.offsetWidth) {
+    if (
+      event.clientX >
+      this.sliderInerRect.right + this.thumbRight.offsetWidth &&
+      this.thumbCurrent === this.thumbRight
+    ) {
       this.thumbRight.style.right = "0%";
       this.boundary.style.right = "0%";
+
+      this.rightBoundary.innerHTML = this.formatValue.call(this, this.max);
       return;
     }
 
-    if (event.clientX < this.sliderInerRect.left - this.thumbLeft.offsetWidth / 2) {
+    if (
+      event.clientX <
+      this.sliderInerRect.left - this.thumbLeft.offsetWidth / 2 &&
+      this.thumbCurrent === this.thumbLeft
+    ) {
       this.thumbLeft.style.left = "0%";
       this.boundary.style.left = "0%";
+
+      this.leftBoundary.innerHTML = this.formatValue.call(this, this.min);
       return;
     }
 
@@ -74,38 +84,47 @@ export default class DoubleSlider {
 
     let percentageValue;
 
-  
-    if (this.dataset === "from") {
-        if(this.selected.from >= this.selected.to || event.clientX >=this.thumbRightRect.left) {
-            if(relatedValue > 0 ) {
-                return
-            }
+    if (this.thumbCurrent === this.thumbLeft) {
+      if (
+        this.selected.from >= this.selected.to ||
+        event.clientX >= this.thumbRightRect.left
+      ) {
+        if (relatedValue > 0) {
+          return;
         }
+      }
       this.selected.from += relatedValue;
       percentageValue = this.convertValueToPercent(this.selected.from);
       this.thumbLeft.style.left = percentageValue + "%";
       this.boundary.style.left = percentageValue + "%";
+
+      this.leftBoundary.innerHTML = this.formatValue.call(
+        this,
+        Math.floor(this.selected.from)
+      );
     }
 
-    if (this.dataset === "to") {
-      //console.log(relatedValue >= this.max)
-      //console.log(this.selected.to)
 
-      console.log(event.clientX);
-
-      this.selected.to += relatedValue;
-
-      if (this.selected.to > this.max) {
-        // если указательмыши вышел за пределы прогесс бара
-        this.selected.to = this.max;
-        //return
+    if (this.thumbCurrent === this.thumbRight) {
+      if (
+        this.selected.from >= this.selected.to ||
+        event.clientX <= this.thumbLeftRect.right
+      ) {
+        if (relatedValue < 0) {
+          return;
+        }
       }
 
-      //if(relatedValue < 0 )     // если указатель мыши находится за пределами прогресс бара и
+      this.selected.to += relatedValue;
 
       percentageValue = this.convertValueToPercent(this.selected.to);
       this.thumbRight.style.right = 100 - percentageValue + "%";
       this.boundary.style.right = 100 - percentageValue + "%";
+
+      this.rightBoundary.innerHTML = this.formatValue.call(
+        this,
+        Math.ceil(this.selected.to)
+      );
     }
 
     this.prevClientX = event.clientX;
@@ -123,38 +142,49 @@ export default class DoubleSlider {
     return (pxCount * 100) / this.sliderInerRect.width;
   };
 
-  convertValueToPercent(value) {
+  convertValueToPercent = (value) => {
     return ((value - this.min) * 100) / (this.max - this.min);
-  }
+  };
 
   render() {
     const element = document.createElement("div");
 
-    element.innerHTML = `<div class="range-slider">${this.getTemplate()}</div>`;
+    element.innerHTML = this.getTemplate();
     this.element = element.firstElementChild;
-    //console.log();
   }
 
   getTemplate() {
-    //console.log(this.selected.from);
     return `
-        
-            <span>${this.formatValue.call(this, this.selected.from)}</span>
-            <div class="range-slider__inner">
-            <span class="range-slider__progress" data-elem="progress" style="left: ${this.convertValueToPercent(
+    <div class="range-slider">
+            <span data-element="from">${this.formatValue.call(
+              this,
+              this.selected.from
+            )}</span>
+            <div data-element="inner" class="range-slider__inner">
+            <span class="range-slider__progress" data-element="progress" style="left: ${this.convertValueToPercent(
               this.selected.from
             )}%; right: ${
       100 - this.convertValueToPercent(this.selected.to)
     }%"></span>
-            <span class="range-slider__thumb-left" data-element="from" style="left: ${this.convertValueToPercent(
+            <span class="range-slider__thumb-left" data-element="thumbLeft" style="left: ${this.convertValueToPercent(
               this.selected.from
             )}%"></span>
-            <span class="range-slider__thumb-right" data-element="to" style="right: ${
+            <span class="range-slider__thumb-right" data-element="thumbRight" style="right: ${
               100 - this.convertValueToPercent(this.selected.to)
             }%"></span>
             </div>
-            <span>${this.formatValue.call(this, this.selected.to)}</span>
-     
+            <span data-element="to">${this.formatValue.call(
+              this,
+              this.selected.to
+            )}</span>
+        </div>
         `;
   }
+
+  destroy = () => {
+    this.element.remove();
+    document.removeEventListener("pointerdown", this.onPointerMove);
+    document.removeEventListener("pointermove", this.onPointerMove);
+    document.removeEventListener("pointerup", this.onPointerUp);
+  };
 }

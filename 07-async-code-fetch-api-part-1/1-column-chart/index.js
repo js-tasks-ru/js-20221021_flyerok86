@@ -18,7 +18,7 @@ export default class ColumnChart {
     this.value = value;
     this.link = link;
     this.heading = formatHeading.call(this, value);
-    this.url = url;
+    this.url = new URL(url, BACKEND_URL);
 
     this.loadingClassName = "column-chart_loading";
 
@@ -38,12 +38,11 @@ export default class ColumnChart {
   }
 
   update(from, to) {
-    const url = new URL(this.url, BACKEND_URL);
 
-    url.searchParams.set("from", from);
-    url.searchParams.set("to", to);
+    this.url.searchParams.set("from", from);
+    this.url.searchParams.set("to", to);
 
-    return fetchJson(url)
+    return fetchJson(this.url)
       .then((data) => {
         this.element.classList.add(this.loadingClassName);
 

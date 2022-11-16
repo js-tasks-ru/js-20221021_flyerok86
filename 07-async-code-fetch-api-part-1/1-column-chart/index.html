@@ -70,17 +70,6 @@
         label: 'customers',
       });
 
-      
-      console.log('a')
-      async function test () {
-        const from = new Date();
-      const to = new Date();
-      const data = await ordersChart.update(from, to);
-      console.log(data)
-      }
-    
-      test()
-      
       orders.append(ordersChart.element);
       sales.append(salesChart.element);
       customers.append(customersChart.element);

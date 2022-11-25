@@ -27,10 +27,13 @@ export default class ProductForm {
     }
   };
 
-  onSubmit = (event) => {
+  onSubmit = async (event) => {
     event.preventDefault();
 
-    this.dispatchEvent("saved");
+    const savedData = await this.saveForm();
+    if(savedData.id){
+      this.dispatchEvent("saved");
+    }
   };
 
   onUploadImages = () => {
@@ -44,7 +47,7 @@ export default class ProductForm {
     fileInput.addEventListener("change", async (event) => {
       const [file] = event.target.files;
       const response = await this.upload(file);
-  
+
       if (response.success) {
         const url = response.data.link;
         const source = file.name;
@@ -59,10 +62,6 @@ export default class ProductForm {
         imageElement.innerHTML = this.getImage(url, source);
 
         this.subElements.sortablelist.append(imageElement.firstElementChild);
-
-        const formData = this.getFormParams();
-
-        this.dispatchEvent("updated");
 
         fileInput.remove();
       }
@@ -88,6 +87,23 @@ export default class ProductForm {
       return Promise.reject(error);
     }
   }
+
+
+  saveForm = async () => {
+    const formData = this.getFormParams();
+
+    return await fetchJson(`${BACKEND_URL}/api/rest/products`, {
+      method: this.productId ? "PATCH" : "PUT",
+      headers: {
+        "Content-Type": "application/json;charset=utf-8",
+      },
+      body: JSON.stringify(formData),
+    });
+  };
+
+  updateForm = () => {
+    const formData = this.getFormParams();
+  };
 
   initListeners = () => {
     this.subElements.sortablelist.addEventListener(
@@ -142,7 +158,7 @@ export default class ProductForm {
       this.products = data.at(0).at(0);
       this.categories = data.at(1);
       this.updateCategories();
-      this.update();
+      this.updateElements();
     } else {
       this.categories = data;
       this.updateCategories();
@@ -150,9 +166,7 @@ export default class ProductForm {
     this.initListeners();
   }
 
-  save = () => {};
-
-  update = () => {
+  updateElements = () => {
     if (!this.products) return;
 
     Object.keys(this.subElements).forEach((element) => {
@@ -270,6 +284,7 @@ export default class ProductForm {
   getFormParams = () => {
     const result = {};
     result["images"] = [];
+    const formatToNumber = ['price', 'quantity', 'discount', 'status'];
     for (const node of Object.keys(this.subElements)) {
       if (node === "sortablelist") {
         Array.from(
@@ -283,14 +298,18 @@ export default class ProductForm {
           });
         });
       } else {
-        result[node] = this.subElements[node].value;
+ 
+        const value = this.subElements[node].value;
+
+        result[node] = formatToNumber.includes(node) ? Number(value): value;
+        
       }
 
       if (this.productId) {
         result["id"] = this.productId;
       }
     }
-
+    
     return result;
   };
 

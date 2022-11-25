@@ -27,14 +27,82 @@ export default class ProductForm {
     }
   };
 
-  onSubmit = (event) => {
+  onSubmit = async (event) => {
     event.preventDefault();
-    this.getFormParams();
-    this.dispatchEvent("saved");
+
+    const savedData = await this.saveForm();
+    if(savedData.id){
+      this.dispatchEvent("saved");
+    }
   };
 
-  onUploadImages = (event) => {
-    console.log(event);
+  onUploadImages = () => {
+    const fileInput = document.createElement("input");
+
+    fileInput.type = "file";
+    fileInput.accept = "image/*";
+
+    fileInput.click();
+
+    fileInput.addEventListener("change", async (event) => {
+      const [file] = event.target.files;
+      const response = await this.upload(file);
+
+      if (response.success) {
+        const url = response.data.link;
+        const source = file.name;
+
+        this.products.images.push({
+          url: url,
+          source: source,
+        });
+
+        const imageElement = document.createElement("div");
+
+        imageElement.innerHTML = this.getImage(url, source);
+
+        this.subElements.sortablelist.append(imageElement.firstElementChild);
+
+        fileInput.remove();
+      }
+    });
+  };
+
+  async upload(file) {
+    const formData = new FormData();
+
+    formData.append("image", file);
+
+    try {
+      const response = await fetch("https://api.imgur.com/3/image", {
+        method: "POST",
+        headers: {
+          Authorization: `Client-ID ${IMGUR_CLIENT_ID}`,
+        },
+        body: formData,
+        referrer: "",
+      });
+      return await response.json();
+    } catch (error) {
+      return Promise.reject(error);
+    }
+  }
+
+
+  saveForm = async () => {
+    const formData = this.getFormParams();
+
+    return await fetchJson(`${BACKEND_URL}/api/rest/products`, {
+      method: this.productId ? "PATCH" : "PUT",
+      headers: {
+        "Content-Type": "application/json;charset=utf-8",
+      },
+      body: JSON.stringify(formData),
+    });
+  };
+
+  updateForm = () => {
+    const formData = this.getFormParams();
   };
 
   initListeners = () => {
@@ -72,6 +140,7 @@ export default class ProductForm {
       return fetchJson(this.urlCategories);
     }
   };
+
   async render() {
     const element = document.createElement("div");
 
@@ -83,10 +152,13 @@ export default class ProductForm {
 
     const data = await this.fetchData();
 
+    const [categoriesData, productResponse] = data;
+
     if (this.productId) {
-      this.products = data[0][0];
-      this.categories = data[1];
-      this.update();
+      this.products = data.at(0).at(0);
+      this.categories = data.at(1);
+      this.updateCategories();
+      this.updateElements();
     } else {
       this.categories = data;
       this.updateCategories();
@@ -94,26 +166,12 @@ export default class ProductForm {
     this.initListeners();
   }
 
-  save = () => {};
-
-  update = () => {
+  updateElements = () => {
     if (!this.products) return;
 
     Object.keys(this.subElements).forEach((element) => {
-      if (this.products.hasOwnProperty(element)) {
-        if (
-          this.subElements[element].nodeName === "INPUT" ||
-          this.subElements[element].nodeName === "TEXTAREA"
-        ) {
-          this.subElements[element].value = this.products[element];
-        }
-        if (this.subElements[element].nodeName === "SELECT") {
-          this.subElements[element].name = this.products[element];
-
-          if (element === "subcategory") {
-            this.updateCategories();
-          }
-        }
+      if (Object.hasOwn(this.products, element)) {
+        this.subElements[element].value = this.products[element];
       }
     });
 
@@ -125,27 +183,35 @@ export default class ProductForm {
   updateFoto = () => {
     const photoTemplate = this.products.images
       .map((item) => {
-        return `<li class="products-edit__imagelist-item sortable-list__item" style="">
-          <input type="hidden" name="url" value="${item.url}">
-          <input type="hidden" name="source" value="${item.source}">
-          <span>
-        <img src="icon-grab.svg" data-grab-handle="" alt="grab">
-        <img class="sortable-table__cell-img" alt="Image" src="${item.url}">
-        <span>${item.source}</span>
-      </span>
-          <button type="button">
-            <img src="icon-trash.svg" data-delete-handle="" alt="delete">
-          </button>
-      </li>`;
+        return this.getImage(item.url, item.source);
       })
       .join("");
 
     this.subElements["sortablelist"].innerHTML = photoTemplate;
   };
 
+  getImage = (url, source) => {
+    return `<li class="products-edit__imagelist-item sortable-list__item" style="">
+          <input type="hidden" name="url" value="${url}">
+          <input type="hidden" name="source" value="${source}">
+          <span>
+        <img src="icon-grab.svg" data-grab-handle="" alt="grab">
+        <img class="sortable-table__cell-img" alt="Image" src="${url}">
+        <span>${source}</span>
+      </span>
+          <button type="button">
+            <img src="icon-trash.svg" data-delete-handle="" alt="delete">
+          </button>
+      </li>`;
+  };
+
   updateCategories = () => {
     this.subElements["subcategory"].innerHTML = this.categories
-      .map((item) => `<option value="${item.id}">${item.title}</option>`)
+      .map((categoty) => {
+        return categoty.subcategories?.map((subcategory) => {
+          return `<option value="${subcategory.id}">${categoty.title} -> ${subcategory.title}</option>`;
+        });
+      })
       .join("");
   };
 
@@ -205,39 +271,45 @@ export default class ProductForm {
   getSubElements = () => {
     const elements = this.element.querySelectorAll(".form-control");
 
-    let result = {};
+    const result = {};
     for (const node of elements) {
       result[node.getAttribute("name")] = node;
     }
 
-    result["sortablelist"] = this.element.querySelector(".sortable-list");
+    result.sortablelist = this.element.querySelector(".sortable-list");
 
     return result;
   };
 
   getFormParams = () => {
     const result = {};
+    result["images"] = [];
+    const formatToNumber = ['price', 'quantity', 'discount', 'status'];
     for (const node of Object.keys(this.subElements)) {
       if (node === "sortablelist") {
-        const imgResult = [];
-        Array.from(this.subElements[node].children).forEach((item) => {
-          const acc = {};
-          imgResult.push(acc);
-          return Array.from(item.children).forEach((subItem) => {
-            if (subItem.name) {
-              acc[subItem.name] = subItem.value;
-            }
+        Array.from(
+          this.subElements[node].querySelectorAll(".sortable-list__item")
+        ).forEach((item) => {
+          const url = item.querySelector('[name="url"]').value;
+          const source = item.querySelector('[name="source"]').value;
+          result.images.push({
+            url: url,
+            source: source,
           });
         });
-        result["images"] = imgResult;
       } else {
-        result[node] =
-          this.subElements[node].value || this.subElements[node].name;
+ 
+        const value = this.subElements[node].value;
+
+        result[node] = formatToNumber.includes(node) ? Number(value): value;
+        
       }
+
       if (this.productId) {
         result["id"] = this.productId;
       }
     }
+    
     return result;
   };
 

@@ -28,6 +28,7 @@ export default class SortableTable {
     }
   };
 
+
   onSortClick = event => {
     const column = event.target.closest('[data-sortable="true"]');
     const toggleOrder = order => {
@@ -112,6 +113,26 @@ export default class SortableTable {
     this.element.classList.remove('sortable-table_loading');
 
     return data;
+  }
+
+  updateWithDate = async(from, to) => {
+    if(!from || !to) return
+    const { id, order } = this.sorted;
+
+    this.loading = true;
+
+    this.url.searchParams.set('_sort', id);
+    this.url.searchParams.set('_order', order);
+    this.url.searchParams.set('_start', this.start);
+    this.url.searchParams.set('_end', this.end);
+    this.url.searchParams.set('from', from.toISOString());
+    this.url.searchParams.set('to', to.toISOString());
+
+    const data = await fetchJson(this.url.toString());
+
+    this.renderRows(data);
+
+    this.loading = false;
   }
 
   addRows(data) {

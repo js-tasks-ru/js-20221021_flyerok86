@@ -209,4 +209,13 @@ export default class Page {
             </div>
             `;
   };
+
+  remove() {
+    this.element.remove();
+  }
+
+  destroy() {
+    this.remove();
+    this.subElements = {};
+  }
 }
